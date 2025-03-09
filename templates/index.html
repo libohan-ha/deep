@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deep Research</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/marked/marked.min.css">
+    <style>
+        :root {
+            --apple-blue: #007AFF;
+            --apple-green: #34C759;
+            --apple-pink: #FF2D55;
+            --apple-purple: #AF52DE;
+            --apple-orange: #FF9500;
+            --apple-red: #FF3B30;
+            --apple-yellow: #FFCC00;
+            --apple-gray: #8E8E93;
+            --apple-light-gray: #F2F2F7;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+        
+        body {
+            background-color: var(--apple-light-gray);
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--apple-blue), var(--apple-purple));
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.5px;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        main {
+            flex: 1;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .search-container {
+            background-color: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            margin-bottom: 2rem;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        input[type="text"] {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            border: 2px solid var(--apple-light-gray);
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+        
+        input[type="text"]:focus {
+            border-color: var(--apple-blue);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
+        }
+        
+        button {
+            background-color: var(--apple-blue);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0 1.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        button:hover {
+            background-color: #0062cc;
+        }
+        
+        button:active {
+            transform: scale(0.98);
+        }
+        
+        button:disabled {
+            background-color: var(--apple-gray);
+            cursor: not-allowed;
+        }
+        
+        .result-container {
+            background-color: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            min-height: 300px;
+            display: none;
+        }
+        
+        .result-container.active {
+            display: block;
+        }
+        
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+            gap: 1.5rem;
+        }
+        
+        .circle-loader {
+            position: relative;
+            width: 80px;
+            height: 80px;
+        }
+        
+        .circle-loader .circle {
+            position: absolute;
+            border: 4px solid transparent;
+            border-radius: 50%;
+            width: 100%;
+            height: 100%;
+            border-top-color: var(--apple-blue);
+            animation: spin 1.5s linear infinite;
+        }
+        
+        .circle-loader .circle:nth-child(2) {
+            border-top-color: var(--apple-green);
+            animation-delay: -0.5s;
+        }
+        
+        .circle-loader .circle:nth-child(3) {
+            border-top-color: var(--apple-pink);
+            animation-delay: -1s;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            font-size: 1.2rem;
+            color: var(--apple-gray);
+            text-align: center;
+        }
+        
+        .markdown-content {
+            line-height: 1.6;
+            font-size: 1.1rem;
+        }
+        
+        .markdown-content h1, 
+        .markdown-content h2, 
+        .markdown-content h3, 
+        .markdown-content h4, 
+        .markdown-content h5, 
+        .markdown-content h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+        
+        .markdown-content h1 {
+            font-size: 2rem;
+            border-bottom: 2px solid var(--apple-light-gray);
+            padding-bottom: 0.5rem;
+        }
+        
+        .markdown-content h2 {
+            font-size: 1.75rem;
+        }
+        
+        .markdown-content p {
+            margin-bottom: 1rem;
+        }
+        
+        .markdown-content ul, 
+        .markdown-content ol {
+            margin-bottom: 1rem;
+            padding-left: 2rem;
+        }
+        
+        .markdown-content blockquote {
+            border-left: 4px solid var(--apple-blue);
+            padding-left: 1rem;
+            color: var(--apple-gray);
+            margin: 1rem 0;
+        }
+        
+        .markdown-content code {
+            background-color: var(--apple-light-gray);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        
+        .markdown-content pre {
+            background-color: #f6f8fa;
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        
+        .markdown-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        
+        .markdown-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1rem 0;
+        }
+        
+        .markdown-content th, 
+        .markdown-content td {
+            border: 1px solid var(--apple-light-gray);
+            padding: 0.5rem;
+            text-align: left;
+        }
+        
+        .markdown-content th {
+            background-color: var(--apple-light-gray);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 2rem;
+            background-color: white;
+            color: var(--apple-gray);
+            font-size: 0.9rem;
+            border-top: 1px solid var(--apple-light-gray);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Deep Research</h1>
+        <p class="subtitle">输入一个概念，获取深度研究结果</p>
+    </header>
+    
+    <main>
+        <div class="search-container">
+            <div class="input-group">
+                <input type="text" id="concept-input" placeholder="输入您想研究的概念..." autofocus>
+                <button id="search-btn">
+                    <i class="fas fa-search"></i>
+                    研究
+                </button>
+            </div>
+        </div>
+        
+        <div class="result-container" id="result-container">
+            <div class="loading-container" id="loading-container">
+                <div class="circle-loader">
+                    <div class="circle"></div>
+                    <div class="circle"></div>
+                    <div class="circle"></div>
+                </div>
+                <p class="loading-text">正在深度研究中，请稍候...</p>
+            </div>
+            
+            <div class="word-count" id="word-count" style="margin-bottom: 1rem; color: var(--apple-gray); font-size: 0.9rem; text-align: right;"></div>
+            <div class="markdown-content" id="result-content"></div>
+        </div>
+    </main>
+    
+    <footer>
+        <p>© 2023 Deep Research - 深度研究工具</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const conceptInput = document.getElementById('concept-input');
+            const searchBtn = document.getElementById('search-btn');
+            const resultContainer = document.getElementById('result-container');
+            const loadingContainer = document.getElementById('loading-container');
+            const resultContent = document.getElementById('result-content');
+            const wordCount = document.getElementById('word-count');
+            
+            // 设置Marked选项，启用GFM和表格支持
+            marked.setOptions({
+                gfm: true,
+                breaks: true,
+                tables: true,
+                sanitize: false
+            });
+            
+            // 监听输入框的回车事件
+            conceptInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    startResearch();
+                }
+            });
+            
+            // 监听按钮点击事件
+            searchBtn.addEventListener('click', startResearch);
+            
+            function startResearch() {
+                const concept = conceptInput.value.trim();
+                
+                if (!concept) {
+                    alert('请输入要研究的概念');
+                    return;
+                }
+                
+                // 显示结果容器和加载状态
+                resultContainer.classList.add('active');
+                loadingContainer.style.display = 'flex';
+                resultContent.style.display = 'none';
+                resultContent.innerHTML = '';
+                
+                // 禁用输入和按钮
+                conceptInput.disabled = true;
+                searchBtn.disabled = true;
+                
+                // 发送请求到后端
+                // 使用fetch API发送POST请求，而不是EventSource
+                fetch('/research', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query: concept })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('网络响应不正常');
+                    }
+                    return response.body;
+                })
+                .then(body => {
+                    const reader = body.getReader();
+                    const decoder = new TextDecoder();
+                    let fullResponse = '';
+                    
+                    function readStream() {
+                        return reader.read().then(({ done, value }) => {
+                            if (done) {
+                                // 处理完成
+                                conceptInput.disabled = false;
+                                searchBtn.disabled = false;
+                                return;
+                            }
+                            
+                            const chunk = decoder.decode(value, { stream: true });
+                            const lines = chunk.split('\n\n');
+                            
+                            for (const line of lines) {
+                                if (line.startsWith('data: ')) {
+                                    try {
+                                        const data = JSON.parse(line.substring(6));
+                                        
+                                        if (data.event === 'message' && data.answer) {
+                                            // 累积响应
+                                            fullResponse += data.answer;
+                                            
+                                            // 计算总字数
+                                            const totalChars = fullResponse.length;
+                                            wordCount.innerHTML = `总字数：${totalChars} 字`;
+                                            
+                                            // 将Markdown转换为HTML并显示
+                                            resultContent.innerHTML = marked.parse(fullResponse);
+                                            
+                                            // 如果是第一次收到响应，隐藏加载状态并显示内容
+                                            if (loadingContainer.style.display === 'flex') {
+                                                loadingContainer.style.display = 'none';
+                                                resultContent.style.display = 'block';
+                                                wordCount.style.display = 'block';
+                                            }
+                                        }
+                                    } catch (error) {
+                                        console.error('解析响应时出错:', error);
+                                    }
+                                }
+                            }
+                            
+                            return readStream();
+                        });
+                    }
+                    
+                    return readStream();
+                })
+                .catch(error => {
+                    console.error('获取研究结果时出错:', error);
+                    resultContent.innerHTML = '<p class="error">获取研究结果时出错，请重试。</p>';
+                    loadingContainer.style.display = 'none';
+                    resultContent.style.display = 'block';
+                    
+                    // 重新启用输入和按钮
+                    conceptInput.disabled = false;
+                    searchBtn.disabled = false;
+                });
+            }
+        });
+    </script>
+</body>
+</html>
